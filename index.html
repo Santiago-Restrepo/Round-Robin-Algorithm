@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Algorítmo round robin</title>
+</head>
+<body>
+    <section class="inputSection">
+        <form class="inputForm" action="">
+            <div class="process">
+                <h3 class="process__title">Proceso 0</h3>
+                <label for="arrivalTime">Tiempo de llegada en milisegundos</label>
+                <input type="number" id="arrivalTime">
+                <br>
+                <label for="needCpu">Necesita de CPU en quantum</label>
+                <input type="number" id="needCpu">
+                <br>
+                <label for="spendInOut">Gasta entrada/salida en Quantums </label>
+                <input type="number" id="spendInOut">
+                <br>
+                <label for="needCpuES">Necesita de CPU en quantum (Entrada / Salida)</label>
+                <input type="number" id="needCpuES">
+                <br>
+                <br>
+                <input class="addInOut" type="button" value="Añadir entrada / salida">
+                <br>
+                <br>
+            </div>
+            <Button class="addProcess" type="submit">Añadir nuevo proceso</Button>
+        </form>
+    </section>
+    <section class="resultSection">
+        <Button class="showResults">Mostrar resultados</Button>
+        <div class="readyProcessQueue">
+            <h2>Cola de procesos en estado listo</h2>
+            <ul class="queueList">
+                <li>
+                    <div class="processName"></div>
+                    <div class="quantumCpu"></div>
+                </li>
+                <!-- Se añaden los li correspondientes a la lógica via js -->
+            </ul>
+        </div>
+        <div class="ganttDiagram">
+            <ul class="ganttList">
+                <li class="ganttList__process">
+                    <div class="msTime"></div>
+                    <div class="processName"></div>
+                    <div class="quantumTime"></div>
+                </li>
+                <li class="ganttList__interchange">
+                    <div class=""></div>
+                    <div class="quantumTime"></div>
+                </li>
+            </ul>
+        </div>
+        <h4 class="returnTime"></h4>
+        <h4 class="avgReturnTime"></h4>
+        <h4 class="waitingTime"></h4>
+        <h4 class="avgWaitingTime"></h4>
+    </section>
+    <script src="./index.js"></script>
+</body>
+</html>
