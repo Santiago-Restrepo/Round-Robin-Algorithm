@@ -1,4 +1,4 @@
-const QUANTUMSIZE = 50; // 1 QUANTUM
+const QUANTUMSIZE = 20; // 1 QUANTUM
 const INTERCHANGE = 10; // MILISECONDS
 const QUANTUMINTERCHANGE = INTERCHANGE/QUANTUMSIZE; // 0.2 QUANTUM
 
@@ -12,6 +12,7 @@ let InOutData = [];
 let processes = [];
 let readyProcessQueue = [];
 let ganttDiagram = [];
+let temp = [];
 let currentTime = 0;
 
 document.querySelector('#arrivalTime').focus();
@@ -35,9 +36,11 @@ const addProcess = (e)=>{
         arrivalTime: parseInt(document.querySelector('#arrivalTime').value),
         needCPU: parseInt(document.querySelector('#needCpu').value),
         InOut: InOutData,
-        comingTime: this.arrivalTime,
+        comingTime: parseInt(document.querySelector('#arrivalTime').value),
         wasChosenBefore: false
     }
+
+    InOutData = [];
     
     processes.push(process);
 
@@ -68,7 +71,7 @@ const sortJsonArray = (jsonArrayToOrder) =>{
 const addProcessToReadyQueue = (processName, quantumCpu)=>{
     let htmlElement = document.createElement('li');
     let htmlString = `
-        <div class="processName">${processName}</div>
+        <div class="processName">P${processName}</div>
         <div class="quantumCpu">${quantumCpu}</div>
     `;
     htmlElement.innerHTML = htmlString;
@@ -85,7 +88,7 @@ const addProcessToGanttDiagram  = (msTimeBefore, msTimeAfter, processName)=>{
             <span class="msTime__before">${msTimeBefore}</span>
             <span class="msTime__after">${msTimeAfter}</span>
         </div>
-        <div class="processName">${processName}</div>
+        <div class="processName">P${processName}</div>
         <div class="quantumTime">1</div>
     `;
     let htmlStringInterchange = `
@@ -93,7 +96,7 @@ const addProcessToGanttDiagram  = (msTimeBefore, msTimeAfter, processName)=>{
         <div class="quantumTime">${QUANTUMINTERCHANGE}</div>
     `;
     htmlElementProcess.innerHTML = htmlStringProcess;
-    htmlElementInterchange.innerHTML = htmlStringInterhtmlElementInterchange;
+    htmlElementInterchange.innerHTML = htmlStringInterchange;
     document.querySelector('.ganttList').appendChild(htmlElementProcess);
     document.querySelector('.ganttList').appendChild(htmlElementInterchange);
 }
@@ -105,6 +108,9 @@ const showResults = ()=>{
         
     } else {
         processes = sortJsonArray(processes);
+
+        //Se envía el proceso con tiempo 0
+
         addProcessToReadyQueue(processes[0].name, processes[0].needCPU);
         readyProcessQueue.push({
             name: processes[0].name,
@@ -124,22 +130,28 @@ const showResults = ()=>{
 
         if(processes[0].needCPU != 0){
             processes[0].comingTime += QUANTUMSIZE + INTERCHANGE;
+        }else if (processes[0].InOut.length != 0){ // Comprobar si tiene E/S y calcular su tiempo de llegada
+            //En este momento el currentTime ya tuvo en cuenta el tiempo de ejecución del quantum que se gastó el proceso
+            processes[0].comingTime = currentTime + (processes[0].InOut[0].spendQuantum * QUANTUMSIZE) ;//Calculamos su nuevo tiempo de llegada (ComingTime)
+            //processes[chosenProcess.name].needCPU = processes[chosenProcess.name].InOut[0].needCPU;//Asignamos los quantums que necesita de cpu según la E/S
         }
 
-        for (let i = 0; i < 14; i++) {
-            let chosenProcess = processes.find(process => process.needCPU != 0 && !process.wasChosenBefore/*Poner condición para E/S|| ( )*/);//Inicializamos el chosenProcess en un Proceso que necesite CPU
-            processes[chosenProcess.name].wasChosenBefore = true;
+        //Envío de los demás procesos
+
+        while(processes.length != 0){
+            let chosenProcess = processes.find(process => process.needCPU != 0 && !process.wasChosenBefore);//Inicializamos el chosenProcess en un Proceso que necesite CPU
+            let chosenProcessId = processes.indexOf(chosenProcess);
+            //debugger
+            processes[chosenProcessId].wasChosenBefore = true;
             for (let i = 0; i < processes.length; i++) {//CICLO PARA RECORRER CADA PROCESO Y cuál será el enviado a la cola de procesos ene stado listo
                 const currentProcess = processes[i];
                 //Criterios para mandar a cola de listos
                 if(currentProcess.needCPU != 0 && currentProcess.comingTime <= currentTime && !currentProcess.wasChosenBefore && currentProcess.comingTime < chosenProcess.comingTime){ //COMPROBAMOS SI EL EL PROCESO ACTUAL NECESITA MÁS CPU - Añadir si chosenProcess está vacío
-                    processes[chosenProcess.name].wasChosenBefore = false;//En caso de que se escogió un proceso con menor prioridad
+                    processes[chosenProcessId].wasChosenBefore = false;//En caso de que se escogió un proceso con menor prioridad
                     chosenProcess = currentProcess;
+                    chosenProcessId = processes.indexOf(chosenProcess);
                     processes[i].wasChosenBefore = true;
                 }
-                // else if (currentProcess.InOut.length != 0){//ACÁ ENTRA SI EL PROCESO SE QUEDA SIN CPU, PERO TIENE E/S
-                //     currentProcess.comingTime = currentTime + currentProcess.inOut[0].spendQuantum * QUANTUMSIZE;//CALCULAMOS EL TIEMPO EN EL QUE VUELVE EL PROCESO
-                // }
             }
 
             //Momento de añadir a las colas
@@ -150,10 +162,12 @@ const showResults = ()=>{
                 name: chosenProcess.name,
                 needCPU: chosenProcess.needCPU
             });
-            processes[chosenProcess.name].needCPU --;
-            
-            processes[readyProcessQueue[0].name].wasChosenBefore = false;//Cambia el valor de que fue escogido antes del proceso anterior al que estamos parados
-            readyProcessQueue[0].shift();//quitamos el proceso que estaba al frente de la cola
+            processes[chosenProcessId].needCPU --;
+            if (processes.indexOf(processes.find(process => process.name === readyProcessQueue[0].name)) != -1) {
+                processes[processes.indexOf(processes.find(process => process.name === readyProcessQueue[0].name))].wasChosenBefore = false;//Cambia el valor de que fue escogido antes del proceso anterior al que estamos parados
+            }
+            temp.push(readyProcessQueue[0]);
+            readyProcessQueue.shift();//quitamos el proceso que estaba al frente de la cola
             
             // PARTE PARA AÑADIR AL DIAGRAMA DE GANTT
             addProcessToGanttDiagram(currentTime, currentTime + QUANTUMSIZE, chosenProcess.name);
@@ -163,82 +177,22 @@ const showResults = ()=>{
                 msTimeAfter: currentTime + QUANTUMSIZE
             });
 
+            //Actualización de tiempos
+
             currentTime += QUANTUMSIZE + INTERCHANGE; // TIEMPO QUE LLEVAREMOS CADA QUE AÑADAMOS UN PROCESO AL DIAGRAMA DE GANTT
-            if(processes[chosenProcess.name].needCPU != 0){
-                processes[chosenProcess.name].comingTime = currentTime + QUANTUMSIZE ; //El coming time será el tiempo en el que terminan los procesos para compararse con los demás
-            }
-                //     // PINTAR UN ESPACIO COMO UN HUECO
-                //     let htmlElement = document.createElement('li')
-                //     htmlElement.classList.add('error')
-                //     document.querySelector('.ganttList').appendChild(htmlElement);
-
-                //     currentTime = processes[i].arrivalTime;
-                //     i--;
+            if(processes[chosenProcessId].needCPU != 0){
+                processes[chosenProcessId].comingTime = currentTime; //El coming time será el tiempo en el que terminan los procesos para compararse con los demás, QUEDA EN DUDA SI SE TIENE O NO EN CUENTA EL INTERCAMBIO
+            }else if (processes[chosenProcessId].InOut.length != 0){ // Comprobar si tiene E/S y calcular su tiempo de llegada
+                //En este momento el currentTime ya tuvo en cuenta el tiempo de ejecución del quantum que se gastó el proceso
+                processes[chosenProcessId].comingTime = currentTime + (processes[chosenProcessId].InOut[0].spendQuantum * QUANTUMSIZE) ;//Calculamos su nuevo tiempo de llegada (ComingTime)
+                processes[chosenProcessId].needCPU = processes[chosenProcessId].InOut[0].needCPU;//Asignamos los quantums que necesita de cpu según la E/S
+                processes[chosenProcessId].InOut.shift();//Quitamos la entrada y salida
+            }else{
+                //Sacar al proceso de la tabla
+                processes = processes.filter(process => process.name != chosenProcess.name);
+            }       
         }
-
-
-        // OTRA FORMA
-
-        // //INICIALIZACIÓN DE COLA DE PROCESOS EN ESTADO LISTO
-        // addProcessToReadyQueue(processes[0].name, processes[0].needCPU);
-        // readyProcessQueue.push({
-        //     name: processes[0].name,
-        //     needCPU: processes[0].needCPU
-        // });
-        
-        // // PARTE PARA AÑADIR AL DIAGRAMA DE GANTT
-        // addProcessToGanttDiagram(currentTime, currentTime + QUANTUMSIZE, readyProcessQueue[0].name);
-        // ganttDiagram.push({
-        //     name: readyProcessQueue[0].name,
-        //     msTimeBefore: currentTime,
-        //     msTimeAfter: currentTime + QUANTUMSIZE
-        // });
-
-        // currentTime += QUANTUMSIZE + INTERCHANGE; // TIEMPO QUE LLEVAREMOS CADA QUE AÑADAMOS UN PROCESO AL DIAGRAMA DE GANTT
-        
-        // while(readyProcessQueue.length != 0){
-
-        //     for (let i = 1; i < processes.length; i++) {
-        //         if(processes[i].arrivalTime <= currentTime && readyProcessQueue[0].needCPU-1 === 0){
-        //             // SE AÑADE EL PROCESO NUEVO A LA COLA DE LISTOS
-        //             // SE BORRA EL PRIMER ELEMENTO DEL VECTOR
-
-        //             // SE AÑADE AL DIAGRAMA DE GANTT
-        //             // SE CAMBIA EL CURRENTTIME
-        //         } else if(processes[i].arrivalTime <= currentTime && readyProcessQueue[0].needCPU-1 > 0){
-        //             // SE AÑADE EL PROCESO NUEVO A LA COLA DE LISTOS
-        //             // SE AÑADE EL PRIMER PROCESO A LA COLA CON LA CPU -1
-        //             // SE BORRA EL PRIMER ELEMENTO DEL VECTOR
-
-        //             // SE AÑADE AL DIAGRAMA DE GANTT
-        //             // SE CAMBIA EL CURRENTTIME
-        //         } else if(processes[i].arrivalTime > currentTime && readyProcessQueue[0].needCPU-1 === 0 && readyProcessQueue.length >= 2) {
-        //             // SE AÑADE AL DIAGRAMA DE GANTT EL SEGUNDO ELEMENTO
-        //             // SE CAMBIA EL CURRENTTIME
-        //             // SE BORRA EL PRIMER ELEMENTO DEL VECTOR
-        //         } else if(processes[i].arrivalTime > currentTime && readyProcessQueue[0].needCPU-1 > 0 && readyProcessQueue.length != 0) {
-        //             // SE AÑADE AL DIAGRAMA DE GANTT EL PRIMER ELEMENTO
-        //             // SE CAMBIA EL CURRENTTIME
-        //             // SE AÑADE A LA COLA DE LISTOS CON LA CPU -1
-        //             // SE BORRA EL PRIMER ELEMENTO DEL VECTOR
-        //         } else if(processes[i].arrivalTime > currentTime && readyProcessQueue.length == 0){
-        //             // NO EXPLICÓ EL PROFESOR COMO SE DEBERIA DE MOSTRAR
-
-        //             //     // PINTAR UN ESPACIO COMO UN HUECO
-        //             //     let htmlElement = document.createElement('li')
-        //             //     htmlElement.classList.add('error')
-        //             //     document.querySelector('.ganttList').appendChild(htmlElement);
-
-        //             //     currentTime = processes[i].arrivalTime;
-        //             //     i--;
-        //         }
-        //     }
-
-        //     // CUANDO SE ACABA EL FOR Y TODOS LOS PROCESOS SON INGRESADOS A LA COLA DE LISTOS SE DEBE SEGUIR VALIDANDO
-            
-
-
-        // }
+        temp.push(readyProcessQueue[0]);
     }
 }
 
