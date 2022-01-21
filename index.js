@@ -1,5 +1,7 @@
-const QUANTUMSIZE = 20; // 1 QUANTUM
-const INTERCHANGE = 10; // MILISECONDS
+/** INICIALIZACIÓN DE LAS CONSTANTES */
+
+const QUANTUMSIZE = 50; // 1 QUANTUM
+const INTERCHANGE = 5; // MILISECONDS
 const QUANTUMINTERCHANGE = INTERCHANGE/QUANTUMSIZE; // 0.2 QUANTUM
 
 const inputForm = document.querySelector('.inputForm');
@@ -8,48 +10,69 @@ const addProcessButton = document.querySelector('.addProcess');
 const showResultsButton = document.querySelector('.showResults');
 const processTitle = document.querySelector('.process__title');
 
+/** INICIALIZACIÓN DE LAS VARIABLES */
+
 let InOutData = [];
 let processes = [];
+let processesCopy = [];
 let readyProcessQueue = [];
 let ganttDiagram = [];
-let temp = [];
 let currentTime = 0;
 
 document.querySelector('#arrivalTime').focus();
 
+/** FUNCIÓN PARA AÑADIR UNA ENTRADA Y SALIDA */
+
 const addInOut = ()=>{
-    InOutData.push({
-        spendQuantum: parseInt(document.querySelector('#spendInOut').value),
-        needCPU: parseInt(document.querySelector('#needCpuES').value)
-    });
+    let spendInOutInput = document.querySelector('#spendInOut');
+    let needCpuESInput = document.querySelector('#needCpuES');
+
+    if (spendInOutInput.value && needCpuESInput.value) {
+        InOutData.push({
+            spendQuantum: parseInt(spendInOutInput.value),
+            needCPU: parseInt(needCpuESInput.value)
+        });
+    } else {
+        alert('¡Agregue la entrada y salida correspondiente!')
+        spendInOutInput.focus();
+    }
 
     document.querySelector('#spendInOut').value = '';
     document.querySelector('#needCpuES').value = '';
     document.querySelector('#spendInOut').focus();
 }
 
+/** FUNCIÓN PARA AÑADIR UN PROCESO NUEVO */
+
 const addProcess = (e)=>{
     e.preventDefault();
 
-    let process = {
-        name: processes.length,
-        arrivalTime: parseInt(document.querySelector('#arrivalTime').value),
-        needCPU: parseInt(document.querySelector('#needCpu').value),
-        InOut: InOutData,
-        comingTime: parseInt(document.querySelector('#arrivalTime').value),
-        wasChosenBefore: false
+    let arrivalTimeInput = document.querySelector('#arrivalTime')
+    let needCpuInput = document.querySelector('#needCpu');
+
+    if (arrivalTimeInput.value && needCpuInput.value) {
+        let process = {
+            name: processes.length,
+            arrivalTime: parseInt(arrivalTimeInput.value),
+            needCPU: parseInt(needCpuInput.value),
+            InOut: InOutData,
+            comingTime: parseInt(arrivalTimeInput.value),
+            wasChosenBefore: false
+        }
+        InOutData = [];
+        processes.push(process);
+        processTitle.innerHTML = "Proceso " + processes.length;
+        
+        document.querySelector('#arrivalTime').value = '';
+        document.querySelector('#needCpu').value = '';
+        document.querySelector('#arrivalTime').focus();
+    } else {
+        alert('¡Agregue los datos del proceso correctamente!')
+        arrivalTimeInput.focus();
     }
-
-    InOutData = [];
-    
-    processes.push(process);
-
-    processTitle.innerHTML = "Proceso " + processes.length;
-    
-    document.querySelector('#arrivalTime').value = '';
-    document.querySelector('#needCpu').value = '';
-    document.querySelector('#arrivalTime').focus();
 }
+
+/** FUNCIÓN PARA ORDENAR EL ARRAY QUE SE GUARDA CON LOS PROCESOS */
 
 const sortJsonArray = (jsonArrayToOrder) =>{
     for (let i = 0; i < jsonArrayToOrder.length; i++) {
@@ -68,6 +91,8 @@ const sortJsonArray = (jsonArrayToOrder) =>{
     return jsonArrayToOrder;
 }
 
+/** FUNCIÓN PARA AÑADIR LOS PROCESOS A LA COLA DE LISTOS */
+
 const addProcessToReadyQueue = (processName, quantumCpu)=>{
     let htmlElement = document.createElement('li');
     let htmlString = `
@@ -77,6 +102,8 @@ const addProcessToReadyQueue = (processName, quantumCpu)=>{
     htmlElement.innerHTML = htmlString;
     document.querySelector('.queueList').appendChild(htmlElement);
 }
+
+/** FUNCIÓN PARA AÑADIR LOS PROCESOS AL DIAGRAMA DE GANTT */
 
 const addProcessToGanttDiagram  = (msTimeBefore, msTimeAfter, processName)=>{
     let htmlElementProcess = document.createElement('li');
@@ -101,6 +128,60 @@ const addProcessToGanttDiagram  = (msTimeBefore, msTimeAfter, processName)=>{
     document.querySelector('.ganttList').appendChild(htmlElementInterchange);
 }
 
+/** FUNCIÓN PARA CREAR UNA COPIA DEL ARRAY ORIGINAL */
+
+const copyJsonArray = (jsonArrayToCopy)=>{
+    let copy = [];
+    jsonArrayToCopy.forEach(element => {
+        copy.push(JSON.parse(JSON.stringify(element)));
+    });
+    return copy;
+}
+
+/** FUNCIÓN PARA CALCULAR LOS RESULTADOS FINALES */
+
+const calculateFinalResults = ()=>{
+    let returnTime = []
+    let waitingTime = []
+
+    processesCopy.forEach(process => {
+        let filteredGanttDiagram = ganttDiagram.filter(ganttProcess => ganttProcess.name === process.name);
+        let lastProcess = filteredGanttDiagram[filteredGanttDiagram.length-1];
+        let lastProcessMsTimeAfter = lastProcess.msTimeAfter;
+        let inOutTimes = 0
+        let arrivalTime = process.arrivalTime;
+        let returnLi = document.createElement('li');
+        let waitingLi = document.createElement('li');
+        let firstProcess = filteredGanttDiagram[0];
+        let firstProcessMsTimeBefore = firstProcess.msTimeBefore;
+        let totalWaitingTime = firstProcessMsTimeBefore - arrivalTime;
+        
+        if (process.InOut.length != 0 ) {
+            inOutTimes = process.InOut.map(io => io.spendQuantum).reduce((previousValue, currentValue) => previousValue + currentValue); 
+            inOutTimes*= QUANTUMSIZE;   
+        }
+        let totalReturnTime = lastProcessMsTimeAfter - inOutTimes - arrivalTime;
+
+        returnTime.push(totalReturnTime);        
+        
+        returnLi.innerHTML = `Tiempo de vuelta del proceso ${process.name} = ${totalReturnTime}`;
+        document.querySelector('.returnTimeList').appendChild(returnLi);
+        
+        waitingTime.push(totalWaitingTime);     
+        
+        waitingLi.innerHTML = `Tiempo de espera del proceso ${process.name} = ${totalWaitingTime}`;
+        document.querySelector('.waitingTimeList').appendChild(waitingLi);
+    });
+
+    let avgReturnTime = returnTime.reduce((previousValue, currentValue) => previousValue + currentValue)/returnTime.length;
+    document.querySelector('.avgReturnTime').innerHTML = "Tiempo medio de vuelta = " + avgReturnTime;
+
+    let avgWaitingTime = waitingTime.reduce((previousValue, currentValue) => previousValue + currentValue)/waitingTime.length;
+    document.querySelector('.avgWaitingTime').innerHTML = "Tiempo medio de espera = " + avgWaitingTime;
+}
+
+/** FUNCIÓN PARA MOSTRAR LOS DOS DIAGRAMAS Y LOS RESULTADOS */
+
 const showResults = ()=>{
     if(!processes.some(item => item.arrivalTime === 0)){
         alert('Ningún proceso tiene 0 como tiempo de llegada')
@@ -108,39 +189,13 @@ const showResults = ()=>{
         
     } else {
         processes = sortJsonArray(processes);
-
-        //Se envía el proceso con tiempo 0
-
-        addProcessToReadyQueue(processes[0].name, processes[0].needCPU);
-        readyProcessQueue.push({
-            name: processes[0].name,
-            needCPU: processes[0].needCPU
-        });
-        processes[0].needCPU --;
-        processes[0].wasChosenBefore = true;
-
-        addProcessToGanttDiagram(currentTime, currentTime + QUANTUMSIZE, processes[0].name);
-        ganttDiagram.push({
-            name: processes[0].name,
-            msTimeBefore: currentTime,
-            msTimeAfter: currentTime + QUANTUMSIZE
-        });
-
-        currentTime += QUANTUMSIZE + INTERCHANGE;
-
-        if(processes[0].needCPU != 0){
-            processes[0].comingTime += QUANTUMSIZE + INTERCHANGE;
-        }else if (processes[0].InOut.length != 0){ // Comprobar si tiene E/S y calcular su tiempo de llegada
-            //En este momento el currentTime ya tuvo en cuenta el tiempo de ejecución del quantum que se gastó el proceso
-            processes[0].comingTime = currentTime + (processes[0].InOut[0].spendQuantum * QUANTUMSIZE) ;//Calculamos su nuevo tiempo de llegada (ComingTime)
-            //processes[chosenProcess.name].needCPU = processes[chosenProcess.name].InOut[0].needCPU;//Asignamos los quantums que necesita de cpu según la E/S
-        }
-
+        processesCopy = copyJsonArray(processes);
         //Envío de los demás procesos
 
         while(processes.length != 0){
             let chosenProcess = processes.find(process => process.needCPU != 0 && !process.wasChosenBefore);//Inicializamos el chosenProcess en un Proceso que necesite CPU
             let chosenProcessId = processes.indexOf(chosenProcess);
+
             //debugger
             processes[chosenProcessId].wasChosenBefore = true;
             for (let i = 0; i < processes.length; i++) {//CICLO PARA RECORRER CADA PROCESO Y cuál será el enviado a la cola de procesos ene stado listo
@@ -153,7 +208,6 @@ const showResults = ()=>{
                     processes[i].wasChosenBefore = true;
                 }
             }
-
             //Momento de añadir a las colas
 
             addProcessToReadyQueue(chosenProcess.name, chosenProcess.needCPU);
@@ -166,7 +220,6 @@ const showResults = ()=>{
             if (processes.indexOf(processes.find(process => process.name === readyProcessQueue[0].name)) != -1) {
                 processes[processes.indexOf(processes.find(process => process.name === readyProcessQueue[0].name))].wasChosenBefore = false;//Cambia el valor de que fue escogido antes del proceso anterior al que estamos parados
             }
-            temp.push(readyProcessQueue[0]);
             readyProcessQueue.shift();//quitamos el proceso que estaba al frente de la cola
             
             // PARTE PARA AÑADIR AL DIAGRAMA DE GANTT
@@ -192,7 +245,7 @@ const showResults = ()=>{
                 processes = processes.filter(process => process.name != chosenProcess.name);
             }       
         }
-        temp.push(readyProcessQueue[0]);
+        calculateFinalResults();
     }
 }
 

@@ -36,30 +36,21 @@
         <Button class="showResults">Mostrar resultados</Button>
         <div class="readyProcessQueue">
             <h2>Cola de procesos en estado listo</h2>
-            <ul class="queueList">
-                <!-- <li>
-                    <div class="processName"></div>
-                    <div class="quantumCpu"></div>
-                </li> -->
-                <!-- Se añaden los li correspondientes a la lógica via js -->
-            </ul>
+            <ul class="queueList"></ul>
         </div>
         <div class="ganttDiagram">
-            <ul class="ganttList">
-                <!-- <li class="ganttList__process">
-                    <div class="msTime"></div>
-                    <div class="processName"></div>
-                    <div class="quantumTime"></div>
-                </li>
-                <li class="ganttList__interchange">
-                    <div class=""></div>
-                    <div class="quantumTime"></div>
-                </li> -->
-            </ul>
+            <h2>Diagrama de Gantt</h2>
+            <ul class="ganttList"></ul>
         </div>
-        <h4 class="returnTime"></h4>
+        <h4 class="returnTime">
+            <ul class="returnTimeList">
+            </ul>
+        </h4>
         <h4 class="avgReturnTime"></h4>
-        <h4 class="waitingTime"></h4>
+        <h4 class="waitingTime">
+            <ul class="waitingTimeList">
+            </ul>
+        </h4>
         <h4 class="avgWaitingTime"></h4>
     </section>
     <script src="./index.js"></script>
