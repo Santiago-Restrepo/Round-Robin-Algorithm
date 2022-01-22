@@ -20,7 +20,7 @@ Just `git clone`
 ## Contributors ✒️
 
 * [Santiago Restrepo](https://github.com/Santiago-Restrepo) - *Development |  Deploy | Documentation*
-* [Miguel Angel Bedoya](https://github.com/MiguelABoni) - *Development |  Deploy *
+* [Miguel Angel Bedoya](https://github.com/MiguelABoni) - *Development |  Deploy*
 
 ---
 📖 Made with ❤️ by [Santiago Restrepo](https://github.com/santiago-restrepo) 😊
