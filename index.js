@@ -1,7 +1,7 @@
 /** INICIALIZACIÓN DE LAS CONSTANTES */
 
 const QUANTUMSIZE = 50; // 1 QUANTUM
-const INTERCHANGE = 5; // MILISECONDS
+const INTERCHANGE = 10; // MILISECONDS
 const QUANTUMINTERCHANGE = INTERCHANGE/QUANTUMSIZE; // 0.2 QUANTUM
 
 const inputForm = document.querySelector('.inputForm');

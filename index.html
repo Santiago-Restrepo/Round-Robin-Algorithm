@@ -13,16 +13,16 @@
             <div class="process">
                 <h3 class="process__title">Proceso 0</h3>
                 <label for="arrivalTime">Tiempo de llegada en milisegundos</label>
-                <input type="number" id="arrivalTime">
+                <input type="number" id="arrivalTime" min="0">
                 <br>
                 <label for="needCpu">Necesita de CPU en quantum</label>
-                <input type="number" id="needCpu">
+                <input type="number" id="needCpu" min="0">
                 <br>
                 <label for="spendInOut">Gasta entrada/salida en Quantums </label>
-                <input type="number" id="spendInOut">
+                <input type="number" id="spendInOut" min="0">
                 <br>
                 <label for="needCpuES">Necesita de CPU en quantum (Entrada / Salida)</label>
-                <input type="number" id="needCpuES">
+                <input type="number" id="needCpuES" min="0"> 
                 <br>
                 <br>
                 <input class="addInOut" type="button" value="Añadir entrada / salida">
@@ -31,9 +31,9 @@
             </div>
             <Button class="addProcess" type="submit">Añadir nuevo proceso</Button>
         </form>
+        <Button class="showResults">Mostrar resultados</Button>
     </section>
     <section class="resultSection">
-        <Button class="showResults">Mostrar resultados</Button>
         <div class="readyProcessQueue">
             <h2>Cola de procesos en estado listo</h2>
             <ul class="queueList"></ul>
@@ -42,6 +42,7 @@
             <h2>Diagrama de Gantt</h2>
             <ul class="ganttList"></ul>
         </div>
+        <h2>Tiempos</h2>
         <h4 class="returnTime">
             <ul class="returnTimeList">
             </ul>

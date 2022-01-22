@@ -1,3 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+
+*{
+    font-family: 'Quicksand';
+}
+body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.addInOut, .addProcess, .showResults{
+    width: 12rem;
+    padding: .5rem;
+    cursor: pointer;
+    border: none;
+    font-weight: 700;
+}
+
+.addInOut{
+    
+    background-color: #6e6e6e;
+    color: white;
+    
+}
+.addProcess{
+    
+    background-color: #42a6f8;
+    color: white;
+}
+
+.showResults{
+    margin-top: 1rem;
+    background-color: #f0ed4a;
+    color: rgb(32, 32, 32);
+}
+input{
+    margin-bottom: .5rem;
+}
 .queueList {
     display: flex;
     flex-wrap: nowrap;
@@ -61,5 +101,5 @@
 .square {
     height: 50%;
     width: 50px;
-    background: #FF0066;
+    background: #f5659e;
 }
