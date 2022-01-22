@@ -2,7 +2,7 @@
 
 This is a simulation of Round Robin algorithm which is a planification algorithm used by Operating systems to choose what process will be send to memory. We used JavaScript to simulate it and HTML5 and CSS3 to display the results.
 
-### Installation 🔧
+## Installation 🔧
 
 #### No instalation requiered
 Just `git clone`
